@@ -1,5 +1,3 @@
-import ffmpegPath from 'ffmpeg-static'
-import ffprobePath from 'ffprobe-static'
 import ffmpeg from 'fluent-ffmpeg'
 import { isMainThread, workerData, parentPort } from 'worker_threads'
 import { getFolderFiles, getInfoAll, timeMarkToSeconds } from './utils'
@@ -7,8 +5,10 @@ import path from 'path'
 import os from 'os'
 import fs from 'fs'
 
-ffmpeg.setFfmpegPath(ffmpegPath)
-ffmpeg.setFfprobePath(ffprobePath.path)
+const homdeDir = os.homedir()
+
+ffmpeg.setFfmpegPath(path.join(homdeDir, '.render-music', 'ffmpeg', 'ffmpeg-master-latest-win64-gpl', 'bin', 'ffmpeg.exe'))
+ffmpeg.setFfprobePath(path.join(homdeDir, '.render-music', 'ffmpeg', 'ffmpeg-master-latest-win64-gpl', 'bin', 'ffprobe.exe'))
 
 const renderAudio = ({ maxDuration, audioInfos, stt }: {
   audioInfos: ffmpeg.FfprobeData[],

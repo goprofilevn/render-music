@@ -5,7 +5,7 @@ import {
 } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { Layout, Menu } from 'antd'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import ImageToVideo from './ImageToVideo'
 import VideoToVideo from './VideoToVideo'
 import DownloadImage from './DownloadImage'
@@ -38,7 +38,9 @@ const View = () => {
   const [collapsed, setCollapsed] = useState(false)
   const [selectedKeys, setSelectedKeys] = useState(['imageToVideo'])
   const onMenuSelect = ({ key }: { key: React.Key }) => setSelectedKeys([key as string])
-
+  useEffect(() => {
+    window.electron.ipcRenderer.invoke('check-resource')
+  }, [])
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Sider collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)}>

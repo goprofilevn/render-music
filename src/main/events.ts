@@ -1,11 +1,48 @@
-import { ipcMain, dialog } from 'electron'
+import { ipcMain, dialog, Notification } from 'electron'
 import axios from 'axios'
 import fs from 'fs'
 import { Worker } from 'worker_threads'
 import { sleep } from './utils'
+import path from 'path'
+import os from 'os'
+import AdmZip from 'adm-zip'
 
 let isRunningDownloadImage = false
 const workers: Worker[] = []
+
+const homdeDir = os.homedir()
+
+ipcMain.handle('check-resource', async (event) => {
+  const ffmpegPath = path.resolve(homdeDir, '.render-music', 'ffmpeg', 'ffmpeg-master-latest-win64-gpl', 'bin', 'ffmpeg.exe')
+  const ffprobePath = path.resolve(homdeDir, '.render-music', 'ffmpeg', 'ffmpeg-master-latest-win64-gpl', 'bin', 'ffprobe.exe')
+  if (fs.existsSync(ffmpegPath) && fs.existsSync(ffprobePath)) {
+    new Notification({
+      title: "Thông báo",
+      body: "Đã cài đặt xong ffmpeg"
+    }).show()
+    return true
+  }
+  if (!fs.existsSync(path.resolve(homdeDir, '.render-music'))) {
+    fs.mkdirSync(path.resolve(homdeDir, '.render-music'), { recursive: true })
+  }
+  // https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip
+  const response = await axios({
+    method: 'get',
+    url: 'https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip',
+    responseType: 'arraybuffer'
+  })
+  const buffer = Buffer.from(response.data, 'binary')
+  const pathSave = path.resolve(homdeDir, '.render-music', 'ffmpeg.zip')
+  await fs.promises.writeFile(pathSave, buffer)
+  const zip = new AdmZip(pathSave)
+  zip.extractAllTo(path.resolve(homdeDir, '.render-music', 'ffmpeg'), true)
+  event.sender.send('ready')
+  new Notification({
+    title: "Thông báo",
+    body: "Đã cài đặt xong ffmpeg"
+  }).show()
+  return true
+})
 
 ipcMain.handle('select-folder', async () => {
   const result = await dialog.showOpenDialog({
@@ -85,7 +122,7 @@ ipcMain.on('start-image-to-video', async (event, data) => {
   for(let i=0; i<thread; i++) {
     const limitValue = i == (thread-1) ? limit - (thread-1) * splitLimit : splitLimit
     console.log('limitValue', limitValue)
-    const worker = new Worker('./out/main/worker.js', {
+    const worker = new Worker(path.resolve(__dirname, 'worker.js'), {
       workerData: {
         audioFolder,
         imageFolder,
