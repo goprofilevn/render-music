@@ -87,7 +87,7 @@ const getImageLexica = async (keyword: string, page: number): Promise<string[]> 
   }
 }
 
-const getImageUnsplash = async (keyword: string, page: number, size: string): Promise<string[]> => {
+const getImageUnsplash = async (keyword: string, page: number): Promise<string[]> => {
   try {
     const response = await axios({
       method: 'GET',
@@ -123,7 +123,7 @@ ipcMain.on('start-download-image', async (event, data) => {
         const imgs = await getImageLexica(keyword, p)
         images.push(...imgs)
       } else {
-        const imgs = await getImageUnsplash(keyword, p, size)
+        const imgs = await getImageUnsplash(keyword, p)
         console.log(`Get images page ${p}: ${imgs.length}`)
         images.push(...imgs)
       }
