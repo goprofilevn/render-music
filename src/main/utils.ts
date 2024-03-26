@@ -81,10 +81,45 @@ export const downloadFile = (url: string, pathFile: string): Promise<void> => {
   })
 }
 
+export const downloadBuffer = (url: string): Promise<Buffer> => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const response = await axios({
+        method: 'get',
+        url,
+        responseType: 'arraybuffer'
+      })
+      resolve(Buffer.from(response.data))
+    } catch (ex) {
+      reject(ex)
+    }
+  })
+}
+
 export const resizeImage = async (pathFile: string, size: string): Promise<Buffer> => {
   try {
     const [width, height] = size.split('x').map(Number)
     const resize = await sharp(pathFile).resize(width).toBuffer()
+    const info = await sharp(resize).metadata()
+    const left = Math.floor(info.width / 2 - width / 2)
+    const top = Math.floor(info.height / 2 - height / 2)
+    const buffer = sharp(resize).extract({
+      width,
+      height,
+      left: left < 0 ? 0 : left,
+      top: top < 0 ? 0 : top
+    }).toBuffer()
+    return buffer
+  } catch (ex) {
+    console.error(ex)
+    throw ex
+  }
+}
+
+export const resizeBuffer = async (input: Buffer, size: string): Promise<Buffer> => {
+  try {
+    const [width, height] = size.split('x').map(Number)
+    const resize = await sharp(input).resize(width).toBuffer()
     const info = await sharp(resize).metadata()
     const left = Math.floor(info.width / 2 - width / 2)
     const top = Math.floor(info.height / 2 - height / 2)

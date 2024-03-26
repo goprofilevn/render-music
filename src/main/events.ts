@@ -2,7 +2,7 @@ import { ipcMain, dialog, Notification } from 'electron'
 import axios from 'axios'
 import fs from 'fs'
 import { Worker } from 'worker_threads'
-import { sleep, getFileName, downloadFile, resizeImage } from './utils'
+import { sleep, getFileName, resizeBuffer, downloadBuffer } from './utils'
 import path from 'path'
 import os from 'os'
 import AdmZip from 'adm-zip'
@@ -137,8 +137,8 @@ ipcMain.on('start-download-image', async (event, data) => {
         }
         const fileName = getFileName(image)
         const pathFile = path.join(outputFolder, fileName)
-        await downloadFile(image, pathFile)
-        const buffer = await resizeImage(pathFile, size)
+        const downoad = await downloadBuffer(image)
+        const buffer = await resizeBuffer(downoad, size)
         fs.writeFileSync(pathFile, buffer)
         event.reply('status-download-image', {
           status: 'success',
