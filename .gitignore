@@ -4,3 +4,5 @@ out/
 .DS_Store
 *.log*
 assets/
+yarn.lock
+package-lock.json

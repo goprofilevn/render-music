@@ -1,12 +1,20 @@
 import { Button, Card, Col, Form, Input, InputNumber, Row, Space, Switch } from 'antd'
 import { useAppDispatch, useAppSelector } from '@renderer/redux/hooks'
-import { setVideoFolder, setOutputFolder, setThread, setMaxDuration, setLimit, setAudioFolder } from '@renderer/redux/reducers/settingSlice'
+import {
+  setVideoFolder,
+  setOutputFolder,
+  setThread,
+  setMaxDuration,
+  setLimit,
+  setAudioFolder
+} from '@renderer/redux/reducers/settingSlice'
 
 const VideoToVideo = () => {
   const table = 'videoToVideo'
   const dispatch = useAppDispatch()
   // const progress = useAppSelector(state => state.progress[table])
-  const { outputFolder, thread, limit, audioFolder, videoFolder, useGPU, maxDuration } = useAppSelector(state => state.setting[table])
+  const { outputFolder, thread, limit, audioFolder, videoFolder, useGPU, maxDuration } =
+    useAppSelector((state) => state.setting[table])
   const handleSelectFile = (key: string) => {
     window.electron.ipcRenderer.invoke('select-folder').then((result: string) => {
       if (result) {
@@ -30,37 +38,33 @@ const VideoToVideo = () => {
         <Col span={14}>
           <Card title="Video To Video">
             <Form layout="vertical">
-              <Form.Item
-                label="Audio Folder"
-              >
+              <Form.Item label="Audio Folder">
                 <Space.Compact block>
                   <Input value={audioFolder} disabled />
-                  <Button type="primary" onClick={() => handleSelectFile('audioFolder')}>Select Folder</Button>
+                  <Button type="primary" onClick={() => handleSelectFile('audioFolder')}>
+                    Select Folder
+                  </Button>
                 </Space.Compact>
               </Form.Item>
-              <Form.Item
-                label="Video Folder"
-                name="videoFolder"
-              >
+              <Form.Item label="Video Folder" name="videoFolder">
                 <Space.Compact block>
                   <Input value={videoFolder} disabled />
-                  <Button type="primary" onClick={() => handleSelectFile('videoFolder')}>Select Folder</Button>
+                  <Button type="primary" onClick={() => handleSelectFile('videoFolder')}>
+                    Select Folder
+                  </Button>
                 </Space.Compact>
               </Form.Item>
-              <Form.Item
-                label="Output Folder"
-              >
+              <Form.Item label="Output Folder">
                 <Space.Compact block>
                   <Input value={outputFolder} disabled />
-                  <Button type="primary" onClick={() => handleSelectFile('outputFolder')}>Select Folder</Button>
+                  <Button type="primary" onClick={() => handleSelectFile('outputFolder')}>
+                    Select Folder
+                  </Button>
                 </Space.Compact>
               </Form.Item>
               <Row>
                 <Col span={6}>
-                  <Form.Item
-                    label="Use GPU"
-                    tooltip="Chưa hỗ trợ"
-                  >
+                  <Form.Item label="Use GPU" tooltip="Chưa hỗ trợ">
                     <Switch
                       checked={useGPU}
                       // onChange={(value) => {
@@ -70,9 +74,7 @@ const VideoToVideo = () => {
                   </Form.Item>
                 </Col>
                 <Col span={6}>
-                  <Form.Item
-                    label="Max Duration"
-                  >
+                  <Form.Item label="Max Duration">
                     <InputNumber
                       min={1}
                       value={maxDuration}
@@ -83,9 +85,7 @@ const VideoToVideo = () => {
                   </Form.Item>
                 </Col>
                 <Col span={6}>
-                  <Form.Item
-                    label="Thread"
-                  >
+                  <Form.Item label="Thread">
                     <InputNumber
                       min={1}
                       value={thread}
@@ -96,9 +96,7 @@ const VideoToVideo = () => {
                   </Form.Item>
                 </Col>
                 <Col span={6}>
-                  <Form.Item
-                    label="Limit"
-                  >
+                  <Form.Item label="Limit">
                     <InputNumber
                       min={1}
                       value={limit}
@@ -114,9 +112,7 @@ const VideoToVideo = () => {
           </Card>
         </Col>
         <Col span={10}>
-          <Card title="Progress">
-            {/* <Progress percent={progress} status="active" /> */}
-          </Card>
+          <Card title="Progress">{/* <Progress percent={progress} status="active" /> */}</Card>
         </Col>
       </Row>
     </>

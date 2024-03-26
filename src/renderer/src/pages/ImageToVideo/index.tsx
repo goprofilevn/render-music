@@ -1,6 +1,27 @@
-import { Button, Card, Col, Form, Image, Input, InputNumber, List, Progress, Row, Space, Switch, message } from 'antd'
+import {
+  Button,
+  Card,
+  Col,
+  Form,
+  Image,
+  Input,
+  InputNumber,
+  List,
+  Progress,
+  Row,
+  Space,
+  Switch,
+  message
+} from 'antd'
 import { useAppDispatch, useAppSelector } from '@renderer/redux/hooks'
-import { setOutputFolder, setThread, setAudioFolder, setImageFolder, setMaxDuration, setLimit } from '@renderer/redux/reducers/settingSlice'
+import {
+  setOutputFolder,
+  setThread,
+  setAudioFolder,
+  setImageFolder,
+  setMaxDuration,
+  setLimit
+} from '@renderer/redux/reducers/settingSlice'
 import { useEffect, useState } from 'react'
 import { addProgress, initProgress, updateProgress } from '@renderer/redux/reducers/progressSlice'
 import Scrollbars from 'react-custom-scrollbars-2'
@@ -8,8 +29,9 @@ import Scrollbars from 'react-custom-scrollbars-2'
 const ImageToVideo = () => {
   const table = 'imageToVideo'
   const dispatch = useAppDispatch()
-  const progress = useAppSelector(state => state.progress[table])
-  const { outputFolder, thread, limit, audioFolder, imageFolder, useGPU, maxDuration } = useAppSelector(state => state.setting[table])
+  const progress = useAppSelector((state) => state.progress[table])
+  const { outputFolder, thread, limit, audioFolder, imageFolder, useGPU, maxDuration } =
+    useAppSelector((state) => state.setting[table])
   const [loading, setLoading] = useState(false)
   const [running, setRunning] = useState(false)
   const handleSelectFile = (key: string) => {
@@ -117,49 +139,43 @@ const ImageToVideo = () => {
         <Col span={14}>
           <Card title="Image To Video">
             <Form layout="vertical">
-              <Form.Item
-                label="Audio Folder"
-              >
+              <Form.Item label="Audio Folder">
                 <Space.Compact block>
                   <Input value={audioFolder} disabled />
-                  <Button type="primary" onClick={() => handleSelectFile('audioFolder')}>Select Folder</Button>
+                  <Button type="primary" onClick={() => handleSelectFile('audioFolder')}>
+                    Select Folder
+                  </Button>
                 </Space.Compact>
               </Form.Item>
-              <Form.Item
-                label="Image Folder"
-                name="imageFolder"
-              >
+              <Form.Item label="Image Folder" name="imageFolder">
                 <Space.Compact block>
                   <Input value={imageFolder} disabled />
-                  <Button type="primary" onClick={() => handleSelectFile('imageFolder')}>Select Folder</Button>
+                  <Button type="primary" onClick={() => handleSelectFile('imageFolder')}>
+                    Select Folder
+                  </Button>
                 </Space.Compact>
               </Form.Item>
-              <Form.Item
-                label="Output Folder"
-              >
+              <Form.Item label="Output Folder">
                 <Space.Compact block>
                   <Input value={outputFolder} disabled />
-                  <Button type="primary" onClick={() => handleSelectFile('outputFolder')}>Select Folder</Button>
+                  <Button type="primary" onClick={() => handleSelectFile('outputFolder')}>
+                    Select Folder
+                  </Button>
                 </Space.Compact>
               </Form.Item>
               <Row>
                 <Col span={6}>
-                  <Form.Item
-                    label="Use GPU"
-                    tooltip="Chưa hỗ trợ"
-                  >
+                  <Form.Item label="Use GPU" tooltip="Chưa hỗ trợ">
                     <Switch
                       checked={useGPU}
-                    // onChange={(value) => {
-                    //   dispatch(setUseGPU({ table, useGPU: value }))
-                    // }}
+                      // onChange={(value) => {
+                      //   dispatch(setUseGPU({ table, useGPU: value }))
+                      // }}
                     />
                   </Form.Item>
                 </Col>
                 <Col span={6}>
-                  <Form.Item
-                    label="Max Duration"
-                  >
+                  <Form.Item label="Max Duration">
                     <InputNumber
                       min={1}
                       value={maxDuration}
@@ -170,9 +186,7 @@ const ImageToVideo = () => {
                   </Form.Item>
                 </Col>
                 <Col span={6}>
-                  <Form.Item
-                    label="Thread"
-                  >
+                  <Form.Item label="Thread">
                     <InputNumber
                       min={1}
                       value={thread}
@@ -183,9 +197,7 @@ const ImageToVideo = () => {
                   </Form.Item>
                 </Col>
                 <Col span={6}>
-                  <Form.Item
-                    label="Limit"
-                  >
+                  <Form.Item label="Limit">
                     <InputNumber
                       min={1}
                       value={limit}
@@ -197,15 +209,17 @@ const ImageToVideo = () => {
                 </Col>
               </Row>
               <Form.Item>
-                {
-                  running ? (
-                    <>
-                      <Button type="primary" danger loading={loading} onClick={handleStop}>Stop</Button>
-                    </>
-                  ) : (
-                    <Button type="primary" loading={loading} onClick={handleStart}>Start</Button>
-                  )
-                }
+                {running ? (
+                  <>
+                    <Button type="primary" danger loading={loading} onClick={handleStop}>
+                      Stop
+                    </Button>
+                  </>
+                ) : (
+                  <Button type="primary" loading={loading} onClick={handleStart}>
+                    Start
+                  </Button>
+                )}
               </Form.Item>
             </Form>
           </Card>

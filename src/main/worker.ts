@@ -10,10 +10,14 @@ const homdeDir = os.homedir()
 ffmpeg.setFfmpegPath(path.join(homdeDir, '.render-music', 'ffmpeg', 'ffmpeg-master-latest-win64-gpl', 'bin', 'ffmpeg.exe'))
 ffmpeg.setFfprobePath(path.join(homdeDir, '.render-music', 'ffmpeg', 'ffmpeg-master-latest-win64-gpl', 'bin', 'ffprobe.exe'))
 
-const renderAudio = ({ maxDuration, audioInfos, stt }: {
-  audioInfos: ffmpeg.FfprobeData[],
-  maxDuration: number,
-  stt: number,
+const renderAudio = ({
+  maxDuration,
+  audioInfos,
+  stt
+}: {
+  audioInfos: ffmpeg.FfprobeData[]
+  maxDuration: number
+  stt: number
 }): Promise<{
   audioFile: string
   duration: number
@@ -63,12 +67,19 @@ const renderAudio = ({ maxDuration, audioInfos, stt }: {
   })
 }
 
-const compareAudioImage = async ({ stt, audioFile, imageFile, outputFile, duration, thread }: {
-  audioFile: string,
-  imageFile: string,
-  outputFile: string,
-  duration: number,
-  stt: number,
+const compareAudioImage = async ({
+  stt,
+  audioFile,
+  imageFile,
+  outputFile,
+  duration,
+  thread
+}: {
+  audioFile: string
+  imageFile: string
+  outputFile: string
+  duration: number
+  stt: number
   thread: number
 }) => {
   return new Promise((resolve, reject) => {
@@ -83,7 +94,7 @@ const compareAudioImage = async ({ stt, audioFile, imageFile, outputFile, durati
       '-crf 18',
       '-c:a copy',
       '-shortest',
-      '-s 1920x1080',
+      '-s 1920x1080'
     ])
     commandVideo.output(outputFile)
     commandVideo.on('end', () => {
@@ -101,7 +112,7 @@ const compareAudioImage = async ({ stt, audioFile, imageFile, outputFile, durati
           action: 'video',
           stt,
           percent,
-          thread,
+          thread
         }
       })
     })
@@ -109,49 +120,51 @@ const compareAudioImage = async ({ stt, audioFile, imageFile, outputFile, durati
   })
 }
 
-  ; (async () => {
-    if (isMainThread) {
+;(async () => {
+  if (isMainThread) {
+    process.exit(0)
+  }
+  parentPort.once('message', (message) => {
+    if (message === 'stop') {
       process.exit(0)
     }
-    parentPort.once('message', (message) => {
-      if (message === 'stop') {
-        process.exit(0)
-      }
-    })
-    const { audioFolder, imageFolder, outputFolder, maxDuration, limit, type, thread } = workerData
-    console.log('thread', thread, limit)
-    if (type == 'imageToVideo') {
-      const imageFiles = (await getFolderFiles(imageFolder)).filter(file => file.endsWith('.jpg') || file.endsWith('.jpeg') || file.endsWith('.png'))
-      const audioInfos = await getInfoAll(audioFolder)
-      for (let i = 0; i < limit; i++) {
-        const stt = (thread - 1) * limit + i + 1
-        const image = imageFiles[Math.floor(Math.random() * imageFiles.length)]
-        const buffer = fs.readFileSync(path.join(imageFolder, image))
-        const outputFile = path.join(outputFolder, `${stt}.mp4`)
-        parentPort.postMessage({
-          progress: {
-            type: 'add',
-            stt,
-            pathFile: outputFile,
-            progress: 0,
-            image: `data:image/jpeg;base64,${buffer.toString('base64')}`,
-          }
-        })
-        // render audio
-        const { audioFile, duration } = await renderAudio({ audioInfos, maxDuration, stt })
-        // join audio and image to video
-        await compareAudioImage({
+  })
+  const { audioFolder, imageFolder, outputFolder, maxDuration, limit, type, thread } = workerData
+  console.log('thread', thread, limit)
+  if (type == 'imageToVideo') {
+    const imageFiles = (await getFolderFiles(imageFolder)).filter(
+      (file) => file.endsWith('.jpg') || file.endsWith('.jpeg') || file.endsWith('.png')
+    )
+    const audioInfos = await getInfoAll(audioFolder)
+    for (let i = 0; i < limit; i++) {
+      const stt = (thread - 1) * limit + i + 1
+      const image = imageFiles[Math.floor(Math.random() * imageFiles.length)]
+      const buffer = fs.readFileSync(path.join(imageFolder, image))
+      const outputFile = path.join(outputFolder, `${stt}.mp4`)
+      parentPort.postMessage({
+        progress: {
+          type: 'add',
           stt,
-          audioFile,
-          imageFile: path.join(imageFolder, image),
-          outputFile: outputFile,
-          duration,
-          thread
-        })
-        fs.unlinkSync(audioFile)
-      }
-    } else {
-      // not implemented
+          pathFile: outputFile,
+          progress: 0,
+          image: `data:image/jpeg;base64,${buffer.toString('base64')}`
+        }
+      })
+      // render audio
+      const { audioFile, duration } = await renderAudio({ audioInfos, maxDuration, stt })
+      // join audio and image to video
+      await compareAudioImage({
+        stt,
+        audioFile,
+        imageFile: path.join(imageFolder, image),
+        outputFile: outputFile,
+        duration,
+        thread
+      })
+      fs.unlinkSync(audioFile)
     }
-    process.exit(0)
-  })()
+  } else {
+    // not implemented
+  }
+  process.exit(0)
+})()

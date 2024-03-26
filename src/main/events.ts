@@ -2,7 +2,7 @@ import { ipcMain, dialog, Notification } from 'electron'
 import axios from 'axios'
 import fs from 'fs'
 import { Worker } from 'worker_threads'
-import { sleep } from './utils'
+import { sleep, getFileName, downloadFile, resizeImage } from './utils'
 import path from 'path'
 import os from 'os'
 import AdmZip from 'adm-zip'
@@ -56,54 +56,107 @@ ipcMain.handle('select-folder', async () => {
 
 // Download image
 
-ipcMain.on('start-download-image', async (event, data) => {
+const getImageLexica = async (keyword: string, page: number): Promise<string[]> => {
   try {
-    const { keyword, outputFolder } = data
+    const limit = 100
+    const cursor = (page - 1) * limit
     const response = await axios({
-      method: 'get',
-      url: `https://lexica.art/?q=${keyword}`,
+      method: 'POST',
+      url: `https://lexica.art/api/infinite-prompts`,
       headers: {
-        'rsc': 1
+        'Content-Type': 'application/json',
+      },
+      data: JSON.stringify({
+        "text": keyword,
+        "model": "lexica-aperture-v3.5",
+        "searchMode": "images",
+        "source": "search",
+        "cursor": cursor,
+      })
+    })
+    const images = []
+    const filters = response.data?.images.filter((image: any) => {
+      return image.width > image.height
+    })
+    for (const image of filters) {
+      images.push(`https://image.lexica.art/full_jpg/${image.id}`)
+    }
+    return images
+  } catch (ex) {
+    throw ex
+  }
+}
+
+const getImageUnsplash = async (keyword: string, page: number, size: string): Promise<string[]> => {
+  try {
+    const response = await axios({
+      method: 'GET',
+      url: `https://unsplash.com/napi/search/photos`,
+      params: {
+        query: keyword,
+        page: page,
+        per_page: 20
       }
     })
+    const images = []
+    const filters = response.data.results.filter((image: any) => {
+      return image.width > image.height
+    })
+    for (const image of filters) {
+      images.push(image.urls.full)
+    }
+    return images
+  } catch(ex) {
+    throw ex
+  }
+}
+
+ipcMain.on('start-download-image', async (event, data) => {
+  try {
+    const { keyword, outputFolder, maxPage, size, server } = data
     event.reply('status-download-image', { status: 'started', message: 'Download started' })
     isRunningDownloadImage = true
-    const rows = response.data.split('\n')
-    let json = null
-    for (const row of rows) {
-      if (row.startsWith('6:')) {
-        json = JSON.parse(row.substring(2))
-        break
+    const images = []
+    let p = 1;
+    while(p <= maxPage) {
+      if (server === 'lexica') {
+        const imgs = await getImageLexica(keyword, p)
+        images.push(...imgs)
+      } else {
+        const imgs = await getImageUnsplash(keyword, p, size)
+        console.log(`Get images page ${p}: ${imgs.length}`)
+        images.push(...imgs)
       }
+      p++
     }
-    const images = json?.[3]?.initialPrompts?.images
-    for (const image of images) {
+    for (let i=0; i<images.length; i++) {
+      const image = images[i]
       try {
         if (!isRunningDownloadImage) {
           break
         }
-        const response = await axios({
-          method: 'get',
-          url: `https://image.lexica.art/full_jpg/${image.id}`,
-          responseType: 'arraybuffer'
+        const fileName = getFileName(image)
+        const pathFile = path.join(outputFolder, fileName)
+        await downloadFile(image, pathFile)
+        const buffer = await resizeImage(pathFile, size)
+        fs.writeFileSync(pathFile, buffer)
+        event.reply('status-download-image', {
+          status: 'success',
+          message: `Download success: ${fileName}`
         })
-        const buffer = Buffer.from(response.data, 'binary')
-        const path = `${outputFolder}/${image.id}.jpg`
-        await fs.promises.writeFile(path, buffer)
-        event.reply('status-download-image', { status: 'success', message: `Download success: ${image.id}` })
         event.reply('progress-download-image', {
-          stt: images.indexOf(image),
+          stt: i + 1,
           total: images.length,
-          pathFile: path,
-          image: `data:image/jpeg;base64,${buffer.toString('base64')}`,
+          pathFile: pathFile,
+          image: `data:image/jpeg;base64,${buffer.toString('base64')}`
         })
-      } catch(ex) {
+      } catch (ex) {
         event.reply('status-download-image', { status: 'error', message: ex?.message || ex })
       }
     }
     event.reply('status-download-image', { status: 'stopped', message: 'Download complete' })
     isRunningDownloadImage = false
-  } catch(ex) {
+  } catch (ex) {
     event.reply('status-download-image', { status: 'error', message: ex?.message || ex })
     isRunningDownloadImage = false
   }
@@ -119,8 +172,8 @@ ipcMain.on('start-image-to-video', async (event, data) => {
   const { audioFolder, imageFolder, outputFolder, maxDuration, thread, limit, useGPU } = data
   event.reply('status-image-to-video', { status: 'started', message: 'Download started' })
   const splitLimit = Math.floor(limit / thread)
-  for(let i=0; i<thread; i++) {
-    const limitValue = i == (thread-1) ? limit - (thread-1) * splitLimit : splitLimit
+  for (let i = 0; i < thread; i++) {
+    const limitValue = i == thread - 1 ? limit - (thread - 1) * splitLimit : splitLimit
     console.log('limitValue', limitValue)
     const worker = new Worker(path.resolve(__dirname, 'worker.js'), {
       workerData: {
@@ -131,7 +184,7 @@ ipcMain.on('start-image-to-video', async (event, data) => {
         limit: limitValue,
         useGPU,
         type: 'imageToVideo',
-        thread: i+1
+        thread: i + 1
       }
     })
     worker.on('message', (message) => {
@@ -162,18 +215,13 @@ ipcMain.on('start-image-to-video', async (event, data) => {
 })
 
 ipcMain.on('stop-image-to-video', async () => {
-  workers.forEach(worker => {
+  workers.forEach((worker) => {
     worker.postMessage('stop')
   })
 })
 
-
 // Video to video
 
-ipcMain.handle('start-video-to-video', async () => {
+ipcMain.handle('start-video-to-video', async () => { })
 
-})
-
-ipcMain.handle('stop-video-to-video', async () => {
-
-})
+ipcMain.handle('stop-video-to-video', async () => { })

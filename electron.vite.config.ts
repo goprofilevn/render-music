@@ -10,9 +10,9 @@ export default defineConfig({
       rollupOptions: {
         input: {
           index: resolve(__dirname, 'src/main/index.ts'),
-          worker: resolve(__dirname, 'src/main/worker.ts'),
-        },
-      },
+          worker: resolve(__dirname, 'src/main/worker.ts')
+        }
+      }
     }
   },
   preload: {

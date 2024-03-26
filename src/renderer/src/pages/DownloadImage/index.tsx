@@ -1,15 +1,35 @@
 import { useAppDispatch, useAppSelector } from '@renderer/redux/hooks'
 import { addProgress, initProgress } from '@renderer/redux/reducers/progressSlice'
-import { setKeyword, setOutputFolder } from '@renderer/redux/reducers/settingSlice'
-import { Input, Form, Space, Button, Card, Row, Col, message, List, Image, Progress } from 'antd'
+import {
+  setKeyword,
+  setOutputFolder,
+  setServer,
+  setMaxPage,
+  setSize
+} from '@renderer/redux/reducers/settingSlice'
+import {
+  Input,
+  Form,
+  Space,
+  Button,
+  Card,
+  Row,
+  Col,
+  message,
+  List,
+  Image,
+  Progress,
+  Select,
+  InputNumber
+} from 'antd'
 import { useEffect, useState } from 'react'
 import { Scrollbars } from 'react-custom-scrollbars-2'
 
 const DownloadImage = () => {
   const table = 'downloadImage'
   const dispatch = useAppDispatch()
-  const progress = useAppSelector(state => state.progress[table])
-  const { keyword, outputFolder } = useAppSelector(state => state.setting[table])
+  const progress = useAppSelector((state) => state.progress[table])
+  const { keyword, outputFolder, server, maxPage, size } = useAppSelector((state) => state.setting[table])
   const [form] = Form.useForm()
   const [running, setRunning] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -31,7 +51,13 @@ const DownloadImage = () => {
       return
     }
     setLoading(true)
-    window.electron.ipcRenderer.send('start-download-image', { keyword, outputFolder })
+    window.electron.ipcRenderer.send('start-download-image', {
+      keyword,
+      outputFolder,
+      maxPage,
+      size,
+      server
+    })
   }
   const handleStop = () => {
     setLoading(true)
@@ -69,7 +95,7 @@ const DownloadImage = () => {
     window.electron.ipcRenderer.on('progress-download-image', (_, data) => {
       dispatch(addProgress({ table, progress: data }))
       if (data?.total) {
-        setPercent(Math.floor(((data.stt+1) / data.total) * 100))
+        setPercent(Math.floor(((data.stt + 1) / data.total) * 100))
       }
     })
     return () => {
@@ -83,32 +109,83 @@ const DownloadImage = () => {
         <Col span={14}>
           <Card title="Download Image">
             <Form form={form} layout="vertical">
-              <Form.Item
-                label="Keyword"
-              >
-                <Input value={keyword} onChange={(e) => {
-                  dispatch(setKeyword({ table, keyword: e.target.value }))
-                }} />
-              </Form.Item>
-              <Form.Item
-                label="Output Folder"
-              >
+              <Row gutter={16}>
+                <Col span={16}>
+                  <Form.Item label="Keyword">
+                    <Input
+                      value={keyword}
+                      onChange={(e) => {
+                        dispatch(setKeyword({ table, keyword: e.target.value }))
+                      }}
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Form.Item label="Server">
+                    <Select
+                      value={server}
+                      onChange={(value) => {
+                        dispatch(setServer({ table, server: value }))
+                      }}
+                      options={[
+                        {
+                          label: 'Lexica',
+                          value: 'lexica'
+                        },
+                        {
+                          label: 'Unsplash',
+                          value: 'unsplash'
+                        }
+                      ]}
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={16}>
+                  <Form.Item label="Size">
+                    <Input
+                      placeholder='1280x720'
+                      value={size}
+                      onChange={(e) => {
+                        dispatch(setSize({ table, size: e.target.value }))
+                      }}
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Form.Item
+                    label="Max Page"
+                    tooltip="lexica: 100, unsplash: 20 (per page)"
+                  >
+                    <InputNumber
+                      value={maxPage}
+                      onChange={(value) => {
+                        dispatch(setMaxPage({ table, maxPage: value }))
+                      }}
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+              <Form.Item label="Output Folder">
                 <Space.Compact block>
                   <Input value={outputFolder} disabled />
-                  <Button type="primary" onClick={() => handleSelectFile()}>Select File</Button>
+                  <Button type="primary" onClick={() => handleSelectFile()}>
+                    Select File
+                  </Button>
                 </Space.Compact>
               </Form.Item>
               <Form.Item>
-                {
-                  running ? (
-                    <>
-                      <Progress percent={percent} status="active" />
-                      <Button type="primary" danger loading={loading} onClick={handleStop}>Stop</Button>
-                    </>
-                  ) : (
-                    <Button type="primary" loading={loading} onClick={handleStart}>Start</Button>
-                  )
-                }
+                {running ? (
+                  <>
+                    <Progress percent={percent} status="active" />
+                    <Button type="primary" danger loading={loading} onClick={handleStop}>
+                      Stop
+                    </Button>
+                  </>
+                ) : (
+                  <Button type="primary" loading={loading} onClick={handleStart}>
+                    Start
+                  </Button>
+                )}
               </Form.Item>
             </Form>
           </Card>

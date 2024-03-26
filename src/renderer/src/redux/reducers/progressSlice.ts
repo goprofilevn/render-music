@@ -30,11 +30,14 @@ const progressSlice = createSlice({
       const { table, progress } = action.payload
       state[table].push(progress)
     },
-    updateProgress: (state, action: PayloadAction<{ table: string; stt: number; progress: number }>) => {
+    updateProgress: (
+      state,
+      action: PayloadAction<{ table: string; stt: number; progress: number }>
+    ) => {
       const { table, stt, progress } = action.payload
       const index = state[table].findIndex((item) => item.stt === stt)
       state[table][index].progress = progress
-    },
+    }
   }
 })
 
