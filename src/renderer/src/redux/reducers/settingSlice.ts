@@ -6,6 +6,7 @@ export interface RenderSetting {
   audioFolder?: string
   imageFolder?: string
   videoFolder?: string
+  randomAudio?: string
   useGPU?: boolean
   keyword?: string
   outputFolder: string
@@ -26,6 +27,7 @@ const initialState: InitialState = {
     audioFolder: '',
     imageFolder: '',
     videoFolder: '',
+    randomAudio: '',
     outputFolder: '',
     thread: 1,
     useGPU: false,
@@ -67,6 +69,9 @@ const settingSlice = createSlice({
     setVideoFolder: (state, action: PayloadAction<{ table: string; videoFolder: string }>) => {
       state[action.payload.table].videoFolder = action.payload.videoFolder
     },
+    setRandomAudio: (state, action: PayloadAction<{ table: string; randomAudio: string }>) => {
+      state[action.payload.table].randomAudio = action.payload.randomAudio
+    },
     setOutputFolder: (state, action: PayloadAction<{ table: string; outputFolder: string }>) => {
       state[action.payload.table].outputFolder = action.payload.outputFolder
     },
@@ -100,6 +105,7 @@ export const {
   setAudioFolder,
   setImageFolder,
   setVideoFolder,
+  setRandomAudio,
   setOutputFolder,
   setUseGPU,
   setKeyword,

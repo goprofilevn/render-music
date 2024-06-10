@@ -20,7 +20,8 @@ import {
   setAudioFolder,
   setImageFolder,
   setMaxDuration,
-  setLimit
+  setLimit,
+  setRandomAudio
 } from '@renderer/redux/reducers/settingSlice'
 import { useEffect, useState } from 'react'
 import { addProgress, initProgress, updateProgress } from '@renderer/redux/reducers/progressSlice'
@@ -30,11 +31,11 @@ const ImageToVideo = () => {
   const table = 'imageToVideo'
   const dispatch = useAppDispatch()
   const progress = useAppSelector((state) => state.progress[table])
-  const { outputFolder, thread, limit, audioFolder, imageFolder, useGPU, maxDuration } =
+  const { outputFolder, thread, limit, audioFolder, imageFolder, useGPU, maxDuration, randomAudio } =
     useAppSelector((state) => state.setting[table])
   const [loading, setLoading] = useState(false)
   const [running, setRunning] = useState(false)
-  const handleSelectFile = (key: string) => {
+  const handleSelectFolder = (key: string) => {
     window.electron.ipcRenderer.invoke('select-folder').then((result: string) => {
       if (result) {
         switch (key) {
@@ -46,6 +47,17 @@ const ImageToVideo = () => {
             break
           case 'imageFolder':
             dispatch(setImageFolder({ table, imageFolder: result }))
+            break
+        }
+      }
+    })
+  }
+  const handleSelectFile = (key: string) => {
+    window.electron.ipcRenderer.invoke('select-file').then((result: string) => {
+      if (result) {
+        switch (key) {
+          case 'randomAudio':
+            dispatch(setRandomAudio({ table, randomAudio: result }))
             break
         }
       }
@@ -81,6 +93,7 @@ const ImageToVideo = () => {
       audioFolder,
       imageFolder,
       outputFolder,
+      randomAudio,
       maxDuration,
       thread,
       limit,
@@ -142,15 +155,25 @@ const ImageToVideo = () => {
               <Form.Item label="Audio Folder">
                 <Space.Compact block>
                   <Input value={audioFolder} disabled />
-                  <Button type="primary" onClick={() => handleSelectFile('audioFolder')}>
+                  <Button type="primary" onClick={() => handleSelectFolder('audioFolder')}>
                     Select Folder
+                  </Button>
+                </Space.Compact>
+              </Form.Item>
+              <Form.Item label="Random Audio" help="Có thể bỏ trống">
+                <Space.Compact block>
+                  <Input value={randomAudio} onChange={(e) => {
+                    dispatch(setRandomAudio({ table, randomAudio: e.target.value }))
+                  }} />
+                  <Button type="primary" onClick={() => handleSelectFile('randomAudio')}>
+                    Select File
                   </Button>
                 </Space.Compact>
               </Form.Item>
               <Form.Item label="Image Folder" name="imageFolder">
                 <Space.Compact block>
                   <Input value={imageFolder} disabled />
-                  <Button type="primary" onClick={() => handleSelectFile('imageFolder')}>
+                  <Button type="primary" onClick={() => handleSelectFolder('imageFolder')}>
                     Select Folder
                   </Button>
                 </Space.Compact>
@@ -158,7 +181,7 @@ const ImageToVideo = () => {
               <Form.Item label="Output Folder">
                 <Space.Compact block>
                   <Input value={outputFolder} disabled />
-                  <Button type="primary" onClick={() => handleSelectFile('outputFolder')}>
+                  <Button type="primary" onClick={() => handleSelectFolder('outputFolder')}>
                     Select Folder
                   </Button>
                 </Space.Compact>

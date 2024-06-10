@@ -54,6 +54,16 @@ ipcMain.handle('select-folder', async () => {
   return result.filePaths[0]
 })
 
+ipcMain.handle('select-file', async () => {
+  const result = await dialog.showOpenDialog({
+    properties: ['openFile']
+  })
+  if (result.canceled) {
+    return ''
+  }
+  return result.filePaths[0]
+})
+
 // Download image
 
 const getImageLexica = async (keyword: string, page: number): Promise<string[]> => {
@@ -169,7 +179,7 @@ ipcMain.on('stop-download-image', async () => {
 // Image to video
 
 ipcMain.on('start-image-to-video', async (event, data) => {
-  const { audioFolder, imageFolder, outputFolder, maxDuration, thread, limit, useGPU } = data
+  const { audioFolder, imageFolder, outputFolder, maxDuration, thread, limit, useGPU, randomAudio } = data
   event.reply('status-image-to-video', { status: 'started', message: 'Download started' })
   const splitLimit = Math.floor(limit / thread)
   for (let i = 0; i < thread; i++) {
@@ -181,6 +191,7 @@ ipcMain.on('start-image-to-video', async (event, data) => {
         imageFolder,
         outputFolder,
         maxDuration,
+        randomAudio,
         limit: limitValue,
         useGPU,
         type: 'imageToVideo',
